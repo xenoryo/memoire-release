@@ -169,10 +169,10 @@ def buildConfigAndPWA(app, exception):
     writeServiceWorker(app.outdir)
     writeManifest(app.srcdir, app.outdir)
     numberOfChapters = numberOfChapters + 1
-    if(numberOfChapters > 20):
+    if(numberOfChapters > 200):
         print("There are " + str(numberOfChapters) + " chapters in this syllabus, it is possibly unwise to use the learning path feature depending on the learning path you plan set")
     else:
-        if(numberofChapters > 50):
+        if(numberofChapters > 500):
             print("There are " + str(numberOfChapters) + " chapters in this syllabus, as a result the learning path feature will be disabled")
 
 
