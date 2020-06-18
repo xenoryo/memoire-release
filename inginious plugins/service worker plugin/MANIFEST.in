@@ -1,0 +1,4 @@
+include INGInious-service-worker-plugin/*.html
+include INGInious-service-worker-plugin/*.js
+include LICENSE
+include README.md

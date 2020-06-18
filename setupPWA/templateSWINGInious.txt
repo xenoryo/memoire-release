@@ -1,0 +1,37 @@
+const staticCacheNameIngi = 'site-static-ingi';
+
+self.addEventListener('activate', evt => {
+  console.log('ingi's service worker activated');
+});
+
+
+
+self.addEventListener('fetch', event => {
+
+	/*evt.respondWith(
+          fetch(evt.request).then(function(fetchResponse) {
+            return caches.open(staticCacheNameIngi).then(cache => {
+                cache.delete(evt.request.url);
+                cache.put(evt.request.url, fetchResponse.clone())
+                return fetchResponse;
+            })
+        }).catch((x) => {         
+            return caches.match(evt.request);
+        })
+      );*/
+	  
+	event.respondWith(
+          fetch(event.request).then(function(fetchResponse) {
+            return caches.open(staticCacheNameIngi).then(cache => {
+                cache.delete(event.request.url);
+                cache.put(event.request.url, fetchResponse.clone())
+                return fetchResponse;
+            })
+        }).catch((x) => {           			
+           	return caches.open(staticCacheNameIngi).then((cache) =>{
+				   return cache.match(event.request.url).then( (cacheValue) =>{					   
+					   return cacheValue;
+				   });
+			});
+		}))
+});
