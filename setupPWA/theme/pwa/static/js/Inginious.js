@@ -32,8 +32,9 @@ Inginious = {
                 throw "Inginious::plugins::chapterAccess could not load base url - Did you forget to start ? ";
 
             var validTaskName = Utils.storage.readJSON("chapters_manager_course_config").exercises[0];
+            var passingThreshold = Utils.storage.readJSON("chapters_manager_course_config").passingThreshold;
 			return $.ajax({
-				url: "/plugin/hideChapters/" + course + "/" + Syllabus.getSyllabusCourseName() + "/" + validTaskName,
+				url: "/plugin/hideChapters/" + course + "/" + Syllabus.getSyllabusCourseName() + "/" + validTaskName + "/" + passingThreshold,
 				dataType: 'json'
 			});
 

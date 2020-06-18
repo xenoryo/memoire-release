@@ -1,10 +1,11 @@
 import yaml
-def getPassedExercises(dict):
+def getPassedExercises(dict, passingThreshold):
+    threshold = float(passingThreshold)
     tasks_grades = dict["task_grades"]
     exercisesNames = list(tasks_grades.keys())
     passed = {}
     for name in exercisesNames:
-        if (tasks_grades[name] > 50.0):
+        if (tasks_grades[name] > threshold):
             passed[name] = 1
     return passed
 
@@ -41,7 +42,7 @@ def isChapterAllowed(allowedAndPassedId, chaptersDict, name):
             return True
         return False
 		
-def getNotAllowedChapters(allowedChapters, left, passedChapters, chaptersDict):
+def getNotAllowedChapters(allowedAndPassedId, left, passedChapters, chaptersDict):
     newChaptersDict = {}
     newLeft = []
     if(not left):
@@ -51,36 +52,35 @@ def getNotAllowedChapters(allowedChapters, left, passedChapters, chaptersDict):
         changes = 0
         for name in chaptersNames:
 
-            isAllowed = isChapterAllowed(allowedChapters, chaptersDict, name)
+            isAllowed = isChapterAllowed(allowedAndPassedId, chaptersDict, name)
             if(isAllowed == True):
                 changes += 1
                 if(name in passedChapters):
                     id = chaptersDict[name]["id"]
-                    allowedChapters.append(id)
+                    allowedAndPassedId.append(id)
             else:
                 newLeft.append(name)
                 newChaptersDict[name] = chaptersDict[name]
         if(changes == 0):
             return left
         else:
-            return getNotAllowedChapters(allowedChapters, newLeft, passedChapters, newChaptersDict)
+            return getNotAllowedChapters(allowedAndPassedId, newLeft, passedChapters, newChaptersDict)
 
 
-def algo(dict, chapterConfig, exerciseConfig):
+def algo(dict, chapterConfig, exerciseConfig, passingThreshold):
     chap = open(chapterConfig, "r")
     ex = open(exerciseConfig, "r")
 
-    chaptersLoad = yaml.load(chap)
+    chaptersLoad = yaml.load(chap, Loader=yaml.FullLoader)
     chaptersDict = {}
     for chapterName, chapterInformation  in chaptersLoad.items():
         chaptersDict[chapterName] = chapterInformation
 
-    exercisesLoad = yaml.load(ex)
+    exercisesLoad = yaml.load(ex, Loader=yaml.FullLoader)
     exercisesDict = {}
     for chapterName, chapterExercises in exercisesLoad.items():
         exercisesDict[chapterName] = chapterExercises
 
-    passedExercises = getPassedExercises(dict)
+    passedExercises = getPassedExercises(dict, passingThreshold)
     passedChapters = getPassedChapters(passedExercises,exercisesDict)
-
     return getNotAllowedChapters([],[" "], passedChapters, chaptersDict)

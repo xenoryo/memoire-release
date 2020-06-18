@@ -1,68 +1,67 @@
-const staticCacheName = 'site-static';
-const dynamicCacheName = 'site-dynamic';
+const staticCache = 'app-static-v1';
 const assets = [
 $1
 ];
 
-self.addEventListener('install', evt => {
-  evt.waitUntil(
-    caches.open(staticCacheName).then((cache) => {
+self.addEventListener('install', event => {
+  event.waitUntil(
+    caches.open(staticCache).then((cache) => {
       cache.addAll(assets);
     })
   );
+  console.log("app service worker installed")
 });
-self.addEventListener('activate', evt => {
-  console.log('app's service worker activated');
-});
+self.addEventListener('activate', event => {
 
-self.addEventListener('fetch', evt => {
-
-  var requestURL = new URL(evt.request.url);
-  var isHtmlRequest = new RegExp(".html");
-
-  if (requestURL.origin == location.origin) {
-    if (isHtmlRequest.test(requestURL.pathname)) {
-      evt.respondWith(
-          fetch(evt.request).then(function(fetchResponse) {
-            return caches.open(staticCacheName).then(cache => {
-                cache.delete(evt.request.url);
-                cache.put(evt.request.url, fetchResponse.clone())
-                return fetchResponse;
-            })
-        }).catch((x) => {
-            return caches.match(evt.request);
-        })
-
+  event.waitUntil(
+    caches.keys().then(keys => {
+      return Promise.all(keys
+        .filter(key => key !== staticCache)
+        .map(key => caches.delete(key))
       );
-  
-    }
-      else{
-        evt.respondWith(
-          caches.match(evt.request).then(cacheRes => {
-            return cacheRes || fetch(evt.request);
-          })
-        );
-      }
-  }
-  else{
-        evt.respondWith(
-          caches.match(evt.request).then(cacheRes => {
-            return cacheRes || fetch(evt.request);
-          })
-        );
-      }
-  /*else{
-    evt.respondWith(
-      caches.match(evt.request).then(cacheRes => {
-        return cacheRes || fetch(evt.request).then(fetchRes => {
-          return caches.open(dynamicCacheName).then(cache => {
-            cache.put(evt.request.url, fetchRes.clone());
-            return fetchRes;
-          })
-        });
-      })
-    );
-  }*/
+    })
+  );
+  console.log("app service worker activated")
+});
 
+self.addEventListener('fetch', event => {
+
+ 
+	var requestURL = new URL(event.request.url);
+  	var isHtmlRequest = new RegExp(".html");
+
+  	if (requestURL.origin == location.origin) {
+    	if (isHtmlRequest.test(requestURL.pathname)) {
+      		event.respondWith(
+          	fetch(event.request).then(function(fetchResponse) {
+				return caches.open(staticCache).then(cache => {
+					cache.delete(event.request.url);
+					cache.put(event.request.url, fetchResponse.clone())
+					return fetchResponse;
+				})
+				}).catch((x) => {
+					return caches.match(event.request);
+				})
+
+			);
+  
+		}
+		else{
+			event.respondWith(
+				caches.match(event.request).then(cacheRes => {
+					return cacheRes || fetch(event.request);
+				})
+			);
+		}
+	}
+	else{
+        event.respondWith(
+          caches.match(event.request).then(cacheRes => {
+            return cacheRes || fetch(event.request);
+			})
+        );
+     }
 
 });
+
+

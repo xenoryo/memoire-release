@@ -16,6 +16,7 @@ def writeAppConfigFile(dst, exercises):
     dict["basicChapterConfig"] = getBasicConfig(dst + "/chapterConfig_" + ingiCourseName + ".yaml")
     dict["freeChapterConfig"] = []
     dict["exercises"] = exercises
+    dict["passingThreshold"] = "50.0"
     file = open(dst + "/_static/js/appConfig.json", 'w')
     json.dump(dict, file)
 
@@ -51,6 +52,7 @@ def writeChapterConfigFile(dst):
 
     file = open(dst + "/chapterConfig_" + ingiCourseName + ".yaml", 'w')
     yaml.dump(finalDict, file)
+    return counter
 
 def addPrefix(exercises, prefix):
     newExercises = []
@@ -162,10 +164,17 @@ def setup(app):
 
 def buildConfigAndPWA(app, exception):
     exercisesList = writeExercisesConfigFile(app.srcdir, app.outdir)
-    writeChapterConfigFile(app.outdir)
+    numberOfChapters = writeChapterConfigFile(app.outdir)
     writeAppConfigFile(app.outdir, exercisesList)
     writeServiceWorker(app.outdir)
-    writeManifestJSON(app.srcdir, app.outdir)
+    writeManifest(app.srcdir, app.outdir)
+    numberOfChapters = numberOfChapters + 1
+    if(numberOfChapters > 20):
+        print("There are " + str(numberOfChapters) + " chapters in this syllabus, it is possibly unwise to use the learning path feature depending on the learning path you plan set")
+    else:
+        if(numberofChapters > 50):
+            print("There are " + str(numberOfChapters) + " chapters in this syllabus, as a result the learning path feature will be disabled")
+
 
 def listToString(list):
     s = "\'" + list[0] + "\'"
@@ -227,25 +236,17 @@ def writeServiceWorker(dst):
 
 
 #JSON
-
-def writeManifestJSON(sourceDir, outputDir):
-    source = open("setupPWA/theme/pwa/static/json/config.txt")
-    lines = source.read()
-    config = lines.split("><")
-
-    if (len(config) != 7):
-        print("WRONG CONFIG FOR JSON")
-
+def writeManifest(sourceDir, outputDir):
+    source = open("setupPWA/theme/pwa/static/json/config.yaml","r")
+    config = yaml.load(source, Loader=yaml.FullLoader)
     data = {}
-    data['name'] = config[0]
-    data['short_name'] = config[1]
-    data['start_url'] = config[2]
-    data['display'] = config[3]
-    data['background_color'] = config[4]
-    data['theme_color'] = config[5]
-    data['orientation'] = config[6]
+    for field, value  in config.items():
+        data[field] = value
+    if(len(data) < 6):
+        print("wrong manifest config")
+    data['start_url'] = pathToSyllabus + "/" + master_doc + ".html"
     data['icons'] = []
-
+	
     files = [f for f in glob.glob(sourceDir + "/setupPWA/theme/pwa/static/json/img/icons/*.png", recursive=True)]
     for f in files:
         p = f.split("/")
@@ -260,8 +261,7 @@ def writeManifestJSON(sourceDir, outputDir):
             'sizes': sizes})
     with open(outputDir + '/manifest.json', 'w') as outfile:
         json.dump(data, outfile)
-
-
+	
 #App config
 
 def getPassedExercises(dict):
@@ -337,10 +337,8 @@ def getNotAllowedChapters(allowedAndPassedId, left, passedChapters, chaptersDict
 def getBasicConfig(chapterConfig):
     chapters = open(chapterConfig, "r")
 
-    chaptersLoad = yaml.load(chapters)
+    chaptersLoad = yaml.load(chapters, Loader=yaml.FullLoader)
     chaptersDict = {}
     for chapterName, chapterInformation in chaptersLoad.items():
         chaptersDict[chapterName] = chapterInformation
     return getNotAllowedChapters([], [" "], [], chaptersDict)
-
-

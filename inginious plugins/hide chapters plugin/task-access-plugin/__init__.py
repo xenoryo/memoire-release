@@ -25,11 +25,11 @@ class ChapterManager:
 
         return self.userManager
 
-    def getUnaccessibleChapters(self, username, courseName):
+    def getUnaccessibleChapters(self, username, courseName, passingThreshold):
         chaptersConfig = os.path.abspath(PATH_TO_PLUGIN) + "/" + CHAPTER_CONFIG + courseName + ".yaml"
         exercisesConfig = os.path.abspath(PATH_TO_PLUGIN) + "/" + EXERCISE_CONFIG + courseName + ".yaml"
         course = self.courseFactory.get_course(courseName)
-        return algo(self.getUserManager().get_course_cache(username,course), chaptersConfig, exercisesConfig)
+        return algo(self.getUserManager().get_course_cache(username, course), chaptersConfig, exercisesConfig, passingThreshold)
 
 class ChapterAccessApi(INGIniousAuthPage):
 
@@ -49,7 +49,7 @@ class ChapterAccessApi(INGIniousAuthPage):
         web.header("Content-Type", "application/json")
         postData = web.input()
         course = postData.course
-
+        passingThreshold = postData.passingThreshold
         data = self.user_manager.session_lti_info()
         if data is None:
             raise web.notfound()
@@ -62,12 +62,14 @@ class ChapterAccessApi(INGIniousAuthPage):
             return { "code": "500", "message": "No LTI session." }
 
         username = inginious_usernames[0]["username"]
-
+        chaptersConfig = os.path.abspath(PATH_TO_PLUGIN) + "/" + CHAPTER_CONFIG + course + ".yaml"
+        empty = []
+        if(len(chaptersConfig) > 500):
+            return json.dumps({"code": "200", "chapters": empty , "username": username , "course": course})
         try:
-            chapters = self.chapterManager.getUnaccessibleChapters(username, course)
+            chapters = self.chapterManager.getUnaccessibleChapters(username, course, passingThreshold)
         except:
             return json.dumps({"code": "500", "message": "An error occured while retrieving the chapters. Please contact your administrator."})
-
         return json.dumps({ "code": "200", "chapters": chapters, "username": username , "course": course})
     
 
